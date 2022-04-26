@@ -1,0 +1,7 @@
+---
+# tasks file for common
+- name: Install required packages
+  apt:
+    pkg:
+    - acl
+    state: present

@@ -1,0 +1,5 @@
+---
+# handlers
+- name: restart wireguard
+  service: name="wg-quick@{{ wireguard_iface }}" state=restarted
+  when: "ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'"

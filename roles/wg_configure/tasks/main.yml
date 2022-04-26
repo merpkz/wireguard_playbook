@@ -1,0 +1,42 @@
+---
+- name: Create WireGuard directory
+  file:
+    path: /etc/wireguard
+    owner: root
+    group: root
+    mode: 0600
+    state: directory
+
+- name: Configure WireGuard
+  blockinfile:
+    dest: "/etc/wireguard/{{ wireguard_iface }}.conf"
+    create: yes
+    mode: 0600
+    owner: root
+    group: root
+    block: |
+      [Interface]
+      Address = {{ wireguard_peers[ansible_hostname].ips | join(', ') }}
+      ListenPort = {{ wireguard_peers[ansible_hostname].port | default( range(32768,65535) | random ) }}
+      PrivateKey = {{ private_key }}
+
+- name: Configure WireGuard peers
+  blockinfile:
+    dest: "/etc/wireguard/{{ wireguard_iface }}.conf"
+    block: |
+      [Peer]
+      PublicKey = {{ hostvars[ item.key ].public_key }}
+      {% if item.value.allowed_ips is defined %}
+      AllowedIPs = {{ item.value.ips | join(', ') }}, {{ item.value.allowed_ips|join(', ') }}
+      {% else %}
+      AllowedIPs = {{ item.value.ips | join(', ') }}
+      {% endif %}
+      {% if ( hostvars[ item.key ]['ansible_default_ipv4'].address | ipaddr('public') ) or ( peer_private_ip is true ) %}
+      Endpoint = {{ hostvars[ item.key ]['ansible_default_ipv4'].address }}:{{ item.value.port | default( range(32768,65535) | random ) }}
+      {% endif %}
+      {% if item.value.extra_opts is defined %}
+      {{ item.value.extra_opts | dictsort | map('join', ' = ') | join('\n') }}
+      {% endif %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR WG PEER {{ item.key }}"
+  loop: "{{ wireguard_peers | dict2items | rejectattr('key', 'match', ansible_hostname ) }}"
+  notify: restart wireguard
