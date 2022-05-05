@@ -39,4 +39,4 @@
       {% endif %}
     marker: "# {mark} ANSIBLE MANAGED BLOCK FOR WG PEER {{ item.key }}"
   loop: "{{ wireguard_peers | dict2items | rejectattr('key', 'match', ansible_hostname ) }}"
-  notify: restart wireguard
+  # notify: restart wireguard
