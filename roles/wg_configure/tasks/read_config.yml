@@ -1,0 +1,21 @@
+---
+- name: Already configured
+  stat:
+    path: "/etc/wireguard/{{ wireguard_iface }}.conf"
+  register: configuration_file
+
+- name: Read existing WireGuard Configuration
+  slurp:
+    src: "/etc/wireguard/{{ wireguard_iface }}.conf"
+  register: wireguard_conf
+  when: (configuration_file.stat.isreg is defined) and (configuration_file.stat.isreg)
+
+- name: Extract current listening port
+  set_fact:
+    wireguard_port: "{{ wireguard_conf.content | b64decode | regex_search('^ListenPort\\s+=\\s+([0-9]+)$', '\\1', multiline=True) | first }}"
+  when: (configuration_file.stat.isreg is defined) and (configuration_file.stat.isreg)
+
+- name: Generate random listening port
+  set_fact:
+    wireguard_port: "{{ range(32768,65535) | random }}"
+  when: wireguard_port is not defined or wireguard_port | length == 0
