@@ -52,6 +52,10 @@ To configure such simple WireGuard setup it's enough to define following setup i
            - 10.1.0.2/32
            - fd00:1337::2/128
          port: 25123
+         # we can optionally define WAN IP of a peer which will be forced to Endpoint on other WG peers.
+         # that is useful when certain peer is in DMZ of a shitty router and technically is reachable from internet, but has a private IP on interface.
+         # and ansible has no way of knowing that, so we set it here to force it.
+         wan_ip: 1.3.3.7
       # This optional IP range will be added as route to server/laptop peers to route to this LAN behind desktop machine.
       # CAUTION - configuring desktop firewall to do IP routing is out of scope for this playbook!
          allowed_ips:
